@@ -38,14 +38,17 @@ output:
     id: LED
     
   # Door Toggle
+  # Relay Connection, USING PIN 16
   - platform: gpio
     pin:
       number: 16
       mode: output
     id: door_toggle
 
+# Sensor for door state (open or closed) also shows door state with internal LED.
+# USING PIN 2 ON PICO
 binary_sensor:
-  # East Garage Door
+  # Garage Door
   - platform: gpio
     pin:
       number: 2
@@ -65,7 +68,7 @@ binary_sensor:
     publish_initial_state: true
     on_state:
       then:
-        - if:
+        - if: # Using Sensor also show state using onboard LED
             condition:
               - binary_sensor.is_on: garage_door_sensor
             then:
@@ -73,6 +76,7 @@ binary_sensor:
             else:
               - output.turn_off: LED
 
+# Switch UI to toggle door, Slider that turns itself off after half a second
 switch:
   - platform: output
     output: door_toggle
