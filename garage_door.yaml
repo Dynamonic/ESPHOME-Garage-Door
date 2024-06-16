@@ -1,0 +1,84 @@
+esphome:
+  name: esphome-garage-door
+  friendly_name: Garage Door
+
+rp2040:
+  board: rpipicow
+  framework:
+    # Required until https://github.com/platformio/platform-raspberrypi/pull/36 is merged
+    platform_version: https://github.com/maxgerhardt/platform-raspberrypi.git
+
+# Enable logging
+logger:
+  level: INFO
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "ENCRYPTION_KEY_HERE"
+
+ota:
+
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot in case wifi connection fails
+  ap:
+    ssid: "Esphome-Garage-Door"
+    password: "PASSWORD_HERE"
+    
+output:
+  # Built-in LED
+  - platform: gpio
+    pin:
+      number: 32
+      mode: output
+    id: LED
+    
+  # Door Toggle
+  - platform: gpio
+    pin:
+      number: 16
+      mode: output
+    id: door_toggle
+
+binary_sensor:
+  # East Garage Door
+  - platform: gpio
+    pin:
+      number: 2
+      mode:
+        input: true
+        pullup: true
+        output: false
+        open_drain: false
+        pulldown: false
+      inverted: false
+    name: Garage Door Sensor
+    id: garage_door_sensor
+    device_class: garage_door
+    filters:
+      - delayed_on: 10ms
+    disabled_by_default: false
+    publish_initial_state: true
+    on_state:
+      then:
+        - if:
+            condition:
+              - binary_sensor.is_on: garage_door_sensor
+            then:
+              - output.turn_on: LED
+            else:
+              - output.turn_off: LED
+
+switch:
+  - platform: output
+    output: door_toggle
+    id: relay
+    name: "Gate Remote"
+    icon: "mdi:gate"
+    on_turn_on:
+    - delay: 500ms
+    - switch.turn_off: relay
